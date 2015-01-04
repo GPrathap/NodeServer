@@ -1,7 +1,7 @@
 wso2nodeserver
 ==============
 
-To install this application,after downloading this repository, inside wso2 node server folder type
+To install this application,after downloading this repository, inside wso2 node server folder, type
 
          npm install 
          
