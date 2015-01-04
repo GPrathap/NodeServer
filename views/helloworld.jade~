@@ -1,0 +1,12 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to our test
+	h2 User List
+		table
+			thead
+			    th UserName
+			    th Email
+			    th Delete
+		         tbody

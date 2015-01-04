@@ -1,0 +1,23 @@
+{
+  "name": "wso2nodeserver",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+  "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "~4.0.0",
+    "serve-favicon": "~2.1.3",
+    "morgan": "~1.0.0",
+    "cookie-parser": "~1.0.1",
+    "body-parser": "~1.0.0",
+    "debug": "~0.7.4",
+    "ejs": "~0.8.5",
+    "mongodb": "*",
+    "monk": "*",
+    "mongoose": "~3.8.20",
+    "mongoskin": "~0.6.0",
+    "log4js":"~0.6.21",
+    "nedb":"~0.10.5"
+  }
+}
