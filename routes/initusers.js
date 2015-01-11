@@ -3,45 +3,53 @@
 var express = require('express');
 var log4js = require('log4js');
 
-var AMapi = require("../amrequest/amrequest.js");
+var AMRequest = require("../amreqres/amrequest.js");
+var AMResponse = require("../amreqres/amresponse.js");
 var Nedbapi = require("../dbrequest/nedb.js");
 
 var router = express.Router();
 var dbreq = new Nedbapi();
-var amreq = new AMapi();
+var amreq = new AMRequest();
+var amres = new AMResponse();
 
 var logger = log4js.getLogger('initusers.js');
+
+/*
+
+These routers are used for create a user, publishing an application and get the access token. 
+All routers are expected these parameters as input arguments.
+
+@param $req- request from client, $res -response from server $next- run the next middleware
+
+here all request from client is handled by amrequest.js, all responses are handled by  
+amresponse.js and database transaction is managed by nedb.js
+
+*/
+
+
+/** 
+  * @desc sing up for WSO2API Manager
+*/ 
 
 router.post('/signup', function(req, res,next) {
 
 	//var req.body={action:"addUser",username:"geesaraSD",password:"geesaraqA3",cookie:"",firstname:"user1",lastname:"user2",phonenumber:"",postalcode:"",country:""}
 
 	amreq.signup(req.body,function(error,response,body){
-                                //console.log("AM body :"+JSON.parse(body).error==false);
-								if(JSON.parse(body).error===true){
-									logger.error('An error has occurred when getting  response of signup from backend server at line 19');
-									//next(new Error('Can not cntact backend server right now try again later'));
-                                    next();
+                                if(error){
+										logger.error("An error has occurred when sending  request to backend server");
+										next(new Error("An error has occurred when sending  request to backend server"));
 								}else{
+										amres.signup(req.body,error,body,function(err,docs){
+												if(err==true){
 
-									//res.set("X-one","to server");
-                                    logger.info('Response of signup request from backend server :'+body);
-                                    dbreq.createUser(req.body,function(err,docs){
-                                        if(err==null){
-
-                                            logger.info('This user has been created :'+JSON.stringify(docs));
-                                            //res.send({ msg: docs});
-
-                                            next();
-                                        }else{
-                                            logger.error('An error has occurred when creating  user at line 29');
-                                            //res.send({ msg: null});
-                                            next();
-                                        }
-                                    });
-
-
+														next(new Error("An error has occurred when getting  response of signup from backend server"));
+												}else{
+													    next();
+												}
+										});
 								}
+								
 	});
     },function(req,res){
 
@@ -49,105 +57,94 @@ router.post('/signup', function(req, res,next) {
     }
 
 );
+
+/** 
+  * @desc log in to WSO2API Manager
+*/ 
+
 router.post('/login', function(req, res,next) {
    
    // console.log(req.body);
     //res.send({ msg: 'login'});
     amreq.login(req.body,function(error,response,body){
-        if(JSON.parse(body).error==true){
-            logger.error('An error has occurred when getting  response of login from backend server at line 56');
-            next();
-        }else{
-                //res.set("X-two","login is done");
-                var findCon={"userDetails.username":req.body.username};
-                var updateCon={$set:{"userDetails.cookie":response.headers['set-cookie']}};
-                dbreq.update(findCon,updateCon,function(err,docs){
-                    if(err==null){
-                         logger.info('User details has been updated :'+JSON.stringify(docs));
-                         next();
-                    }else{
+       							if(error){
+										logger.error("An error has occurred when logining  request to backend server");
+										next(new Error("An error has occurred when logining  request to backend server"));
+								}else{
+										amres.login(req.body,error,body,response,function(err,docs){
+												if(err==true){
 
-                         logger.error('An error has occurred when updating  user at line 56 '+err);
-                         next();
-                    }
-                });
-            }
+														next(new Error("An error has occurred when getting  response of login from backend server"));
+												}else{
+													    next();
+												}
+										});
+								}
+
     });
     },function(req,res){
         res.send({ msg: "You have been successfully logged in"});
 });
 
+/** 
+  * @desc adding application to WSO2API Manager
+*/ 
+
 router.post('/addApplication', function(req, res,next) {
    
     var details=req.body;
-    var findCon={"userDetails.username":details.username};
+    if(typeof details.username=="undefined"){
+			logger.error('This user has not been signed up yet');
+            next(new Error('This user has not been signed up yet'));
+	}else{
 
-    dbreq.find(findCon,function(err,docs){
-        if(err==null){
-            logger.info('User is found :'+JSON.stringify(docs));
-            if(typeof docs[0].userDetails=="undefined"){
+    	var findCon={"userDetails.username":details.username};
 
-                logger.error('This user has not been signed up yet');
-                next();
-            }else{
-                var cookie=docs[0].userDetails.cookie;
-                if(cookie!=""){
+    	dbreq.find(findCon,function(err,docs){
+        	if(err==null){
+            	logger.info('User is found :'+JSON.stringify(docs));
+            	if(typeof docs[0].userDetails=="undefined"){
+
+                	logger.error('This user has not been signed up yet');
+                	next(new Error("This user has not been signed up yet"));
+
+            	}else{
+
+                	var cookie=docs[0].userDetails.cookie;
+                	if(cookie!=""){
                         amreq.addApplication(cookie,details,function(error, response, body){
-                        if(error){
-                            logger.error('An error has occurred when getting  response of adding an application from backend server at line 95');
-                            next();
-                        }else{
-                            
-                            var updateCon={
+                       		if(error){
+										logger.error("An error has occurred when adding an application");
+										next(new Error("An error has occurred when adding an application"));
+							}else{
+										amres.addApplication(req.body,error,body,response,function(err,docs){
+												if(err==true){
 
-                                                $push:{
-                                                            applicationsInfo:{
-                                                                    application:details.application,
-                                									tier:details.tier,
-                                									callbackUrl:details.callbackUrl,
-                                									description:details.description,
-                                									keytype:"",
-                            										callbackUrl:"",
-                            										authorizedDomains:"",
-                            										validityTime:"",
-                            										consumerKey:"",
-                                            						accessToken:"",
-                                            						consumerSecret:"",
+														next(new Error("An error has occurred when getting  response of adding application from backend server error: "+docs.message));
+												}else{
+													    next();
+												}
+										});
+							}
+                    	});
+                	}else{
+                    	logger.error('User has not logged in yet :'+JSON.stringify(docs));
+                    	next(new Error('User has not logged in yet :'+JSON.stringify(docs)));
+                	}
+            	}
 
-                       										}
-                                                }
-                                        };
-                            dbreq.update(findCon,updateCon,function(err,docs){
-                                if(err==null){
-                                    
-                                    logger.debug('User details has been updated :'+JSON.stringify(docs));
-                                    next();
-
-                                }else{
-
-                                    logger.error('Application has not been created yet Try that later  :'+JSON.stringify(docs));
-                                    next();
-
-                                }
-                            });
-
-                        }
-                    });
-                }else{
-                    logger.error('User not found :'+JSON.stringify(docs));
-                    next();
-                }
-            }
-
-        }else{
-            logger.error('Application has not been created yet Try that later  :'+err);
-            next();
-        }
-    });
+        	}else{
+            	logger.error('Application has not been created yet Try that later  :'+err);
+            	next(new Error('Application has not been created yet Try that later  :'+err));
+        	}
+    	});
+	}
 },function(req,res){
     res.send({ msg: "Application is added"});
 });
-
+/** 
+  * @desc Subscribing to an application 
+*/ 
 router.post('/subscribe', function(req, res,next) {
 
     var details=req.body;
@@ -159,110 +156,164 @@ router.post('/subscribe', function(req, res,next) {
             if(typeof docs[0].userDetails=="undefined"){
 
                 logger.error('This user has not been signed up yet');
-                next();
+                next(new Error('This user has not been signed up yet'));
 
             }else{
 
                 var cookie=docs[0].userDetails.cookie;
 
                 if(cookie!=""){
-
-                    amreq.addSubscription(cookie,details,function(error, response, body){
+                    amreq.getAppDetails(cookie,details,function(error, response, body){
                         if(error){
-                            logger.error('An error has occurred when getting  response of subscription from backend server at line 170');
-                            next();
+                            logger.error('An error has occurred when getting  application details from backend server ');
+                            next(new Error('An error has occurred when getting  application details from backend server at line 172'));
                         }else{
-                           
-                            amreq.generateApplicationKey(cookie,details.applicationKeyDetails,function(error, response, body){
-                                if(error){
-                                    logger.error('An error has occurred when getting  response of generated application key from backend server at line 176');
-                                    next();
-                                }else{
-                                    body=JSON.parse(body);
-                                    if(typeof body.data.key =="undefined"){
-                                        logger.error('Response of backend server is invalid, some sort of internal server error might has been occurred');
-                                        next();
-                                    }else{
-                                    	
-                                        var findCon={"userDetails.username":details.username};
-                                        var nextApplication=0;
-                                        dbreq.find(findCon,function(err,docs){
-                                        		
-                                        		var lengthOfApplication=Object.keys(docs[0].applicationsInfo).length;
-                                        		if(lengthOfApplication==0){
+                            var responseBody=JSON.parse(body);
+                            if(responseBody.error==true){
+                                logger.error(responseBody.message);
+                                next(new Error(responseBody.message));
+                            }else{
 
-                                                    nextApplication=lengthOfApplication;
+                                logger.info("User information "+JSON.stringify(responseBody));
+                                var lengthOfApplication=Object.keys(responseBody.applications).length;
+                                var applicationDetails=responseBody.applications;
+                                var appname=details.applicationKeyDetails.application;
+                                if(lengthOfApplication==0){
+                                	logger.error('You have not created any application yet.Please create first before subscribe. ');
+                                    next(new Error("You have not created any application yet.Please create first before subscribe. "));
+                                }else{
+                                    for (var i = 0; i <lengthOfApplication; i++){
+                                        if(applicationDetails[i].name==appname){
+                                           // console.log("Get ID O of it:"+applicationDetails[i].id);
+                                            details.applicationId=applicationDetails[i].id;
+                                            amreq.addSubscription(cookie,details,function(error, response, body){
+                                                if(error){
+                                                    logger.error('An error has occurred when getting  response of subscription from backend server ');
+                                                    next();
                                                 }else{
 
-                                                    nextApplication=lengthOfApplication-1;
-                                        			
-                                        		}
-                                        		
-                                        		var findCon={"userDetails.username":details.username};
-                                        		
-                                                var updateCon = {$set:{}};
-										          updateCon.$set["applicationsInfo."+nextApplication+".consumerKey"] =body.data.key.consumerKey;
-										          updateCon.$set["applicationsInfo."+nextApplication+".accessToken"] =body.data.key.accessToken;
-										          updateCon.$set["applicationsInfo."+nextApplication+".consumerSecret"] =body.data.key.consumerSecret;
-										          updateCon.$set["applicationsInfo."+nextApplication+".keytype"] =details.keytype;
-										          updateCon.$set["applicationsInfo."+nextApplication+".callbackUrl"] =details.callbackUrl;
-										          updateCon.$set["applicationsInfo."+nextApplication+".validityTime"] =details.validityTime;
-										          updateCon.$set["applicationsInfo."+nextApplication+".authorizedDomains"] =details.authorizedDomains;
-                                                  this.accessToken=body.data.key.accessToken;
-                                                dbreq.update(findCon,updateCon,function(err,docs){
-                                                        if(err==null){
-                                                            
-                                                            var findCon={"userDetails.username":details.username};
-                                                            var updateCon={$push:{
+                                                    amreq.generateApplicationKey(cookie,details.applicationKeyDetails,function(error, response, body){
+                                                    	
+                                                       	if(error){
+															logger.error("An error has occurred when generating ApplicationKey");
+															next(new Error("An error has occurred when generating ApplicationKey"));
+														}else{
 
-                                                                    subscriptionDetails:
-                                                                    {
-                                                                            name:details.name,
-                                                                            version:details.version,
-                                                                            provider:details.provider,
-                                                                            tier:details.tier,
-                                                                            applicationId:details.applicationId
-                                                                    }
-                                                                }
-                                                             };
-                                                            dbreq.update(findCon,updateCon,function(err,docs){
-                                                                if(err==null) {
-                                                                        logger.info('User details has been updated :'+JSON.stringify(docs));
-                                                                        next();
-                                                                 }else{
-                                                                        logger.error(' :'+JSON.stringify(docs));
-                                                                        logger.error('An error has occurred when updating  user at line 234');
-                                                                        next();
-                                                                }
-                                                            });
-                                                        }else{
-                                                            logger.error('An error has occurred when updating  user at line 212');
-                                                            next();
-                                                        }
+															amres.generateApplicationKey(details,error,body,response,function(err,docs){
+
+																if(err==true){
+																	
+																	logger.error(docs.message);
+																	next(new Error("An error has occurred when getting  a application key from backend server error: "+docs.message));
+																}else{
+													   				 next();
+																}
+															});
+														}
+                                                    });
+                                                }
                                             });
-
-                                        });
-                                        next();
+                                        }
                                     }
-
+                                  
                                 }
-                            });
+
+                            }
                         }
                     });
+                  
+
+
                 }else{
-                    next();
+                    next(new Error(err));
                 }
             }
 
         }else{
             console.log("error: "+err);
-            next();
+            next(new Error(err));
         }
     });
 },function(req,res){
     res.json({ msg: "Your subscription is accepted successfully",appAccessToken:this.accessToken});
 });
 
+/** 
+  * @desc gettnig applications details
+*/ 
+
+router.post('/getAppDetails', function(req, res,next) {
+
+    //var req.body={action:"addUser",username:"geesaraSD",password:"geesaraqA3",cookie:"",firstname:"user1",lastname:"user2",phonenumber:"",postalcode:"",country:""}
+    var details=req.body;
+    if(typeof details.username=="undefined"){
+
+        logger.error("Client request may have some errors.");
+        next(new Error("Client request may have some errors."));
+
+    }
+    var findCon={"userDetails.username":details.username};
+
+    dbreq.find(findCon,function(err,docs){
+        if(err==null){
+            logger.info('User is found :'+JSON.stringify(docs));
+            if(typeof docs[0].userDetails=="undefined"){
+
+                logger.error('This user has not been signed up yet');
+                next(new Error("This user has not been signed up yet"));
+
+            }else{
+                var cookie=docs[0].userDetails.cookie;
+                if(cookie!=""){
+                        amreq.getAppDetails(cookie,details,function(error, response, body){
+                        if(error){
+                            logger.error('An error has occurred when getting  application details from backend server ');
+                            next(new Error("An error has occurred when getting  application details from backend server "));
+                        }else{
+                                var responseBody=JSON.parse(body);
+                                if(responseBody.error==true){
+                                        logger.error(responseBody.message);
+                                        next(new Error(responseBody.message));
+                                }else{
+                                                logger.info(JSON.stringify(responseBody));
+                                                var lengthOfApplication=Object.keys(responseBody.applications).length;
+                                                var applicationDetails=responseBody.applications;
+                                                var appname=details.applicationKeyDetails.application;
+                                                if(lengthOfApplication==0){
+                                                    
+                                                    logger.error("You have not been created any Application yet");
+                                                    next(new Error("You have not been created any Application yet"));
+                                                   
+                                                }else{
+
+                                                    /*for (var i = 0; i <lengthOfApplication; i++) {
+                                                        if(applicationDetails[i].name==appname){
+                                                            console.log(""+applicationDetails[i].id);
+                                                        }
+                                                    };*/
+                                                    next();
+                                                }
+                                        
+                                }
+                        }
+                    });
+                }else{
+                    logger.error('User not found :'+JSON.stringify(docs));
+                    next(new Error('User not found :'+JSON.stringify(docs)));
+                }
+            }
+
+        }else{
+            logger.error('Application has not been created yet Try that later  :'+err);
+            next(new Error('Application has not been created yet Try that later  :'+err));
+        }
+    });
+    },function(req,res){
+
+        res.send({ msg: "Your application details are below"});
+    }
+
+);
 
 
 module.exports = router;

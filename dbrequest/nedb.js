@@ -3,57 +3,33 @@ var log4js = require('log4js');
 var logger = log4js.getLogger('initusersjs');
 
 var Datastore = require('nedb');
-var db = new Datastore({ filename: 'database/userinfo.db', autoload: true });
+var db = new Datastore({ filename: 'database/userinfo1.db', autoload: true });
+
+/*
+
+All database transactions are managed by this api(nedb). 
+Database details-: name:userinfo1.db path:../database/
+@param 
+$findCon- a query that is used as find condition
+$updateCon - a query that is the update condition corresponding to find result
+
+*/
+
 var nedbapi = function(){
     var nedb =this;
     nedb.db=db;
-    nedb.userinfo={
-
-    userDetails:
-            {
-                username:"",
-                password:"",
-                cookie:"",
-                firstname:"",
-                lastname:"",
-                phonenumber:"",
-                postalcode:"",
-                country:""
-            },
-    applicationsInfo:[
-            {
-                application:"",
-                tier:"",
-                callbackUrl:"",
-                description:"",
-                applicationKeyDetails:
-                        {
-                            keytype:"",
-                            callbackUrl:"",
-                            authorizedDomains:"",
-                            validityTime:""
-
-                        }
-            }
-    ],
-    subscriptionDetails:[
-            {
-                name:"",
-                version:"",
-                provider:"",
-                tier:"",
-                applicationId:""
-            }
-    ]
-
-    };
-
-/*var findCon={"userDetails.username":"prsedsdef"};
-var updateCon={$push:{
+   
+   
+    /*var findCon={"userDetails.username":"prsedsdef"};
+    var updateCon={$push:{
 	 			subscriptionDetails:{name:"WikipediaAPIs",version:"1.0.0",provider:"provider1",tier:"Gold",applicationId:32}
 			  }};
-var updateCon={$set:{"userDetails.password":"gothere123A","userDetails.firstname":"Jone"}};*/
+    var updateCon={$set:{"userDetails.password":"gothere123A","userDetails.firstname":"Jone"}};*/
 
+    /** 
+    * @desc -updating database
+
+    */ 
     nedb.update=function(findCon,updateCon,callback){
             var error;
             var doc;
@@ -75,7 +51,10 @@ var updateCon={$set:{"userDetails.password":"gothere123A","userDetails.firstname
 			});
     }
 //nedb.update(findCon,updateCon,function(err,docs){});
+    /** 
+    * @desc -finding data from database
 
+    */ 
     nedb.find=function(findCon,callback){
                 var error;
                 var doc;
@@ -102,7 +81,11 @@ var updateCon={$set:{"userDetails.password":"gothere123A","userDetails.firstname
 //var findCon={"applicationsInfo.applicationKeyDetails.keytype":"PRODUCTION"};
 //var findCon={"userDetails.username":"prsedsdef"};
 //nedb.find(findCon,function(err,docs){});
+     
+     /** 
+    * @desc -inserting data into database
 
+    */ 
 
 
     nedb.insert=function(data,callback){
@@ -128,9 +111,11 @@ var updateCon={$set:{"userDetails.password":"gothere123A","userDetails.firstname
     }
 
 //nedb.insert(userinfo,,function(err,docs){});
+    /*This is the way how create a user*/
     nedb.createUser=function(userDetails,callback){
         var error;
         var doc;
+        /*This is the skeleton structure of user*/
         var userinfo={
 
             userDetails:
@@ -191,9 +176,11 @@ var updateCon={$set:{"userDetails.password":"gothere123A","userDetails.firstname
 
         });
     }
+    /*This is the way how create a api publisher*/
     nedb.createAPIUser=function(userDetails,callback){
         var error;
         var doc;
+        /*This is the skeleton structure of api publisher*/
         var userinfo={
 
             userDetails:

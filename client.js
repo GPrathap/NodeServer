@@ -63,8 +63,9 @@ var userDetailsAPI={
 }
 
 var apiPublishDetalis={
+
     username:"provider1",
-    name:"Wikiv",
+    name:"Wsaccv",
     version:"1.0.0",
     provider:"provider1",
     status:"PUBLISHED",
@@ -73,38 +74,37 @@ var apiPublishDetalis={
 }
 
 var apiDetalis={
-    username:"provider1",
-    action:"addAPI",
-    name:"Wikikv",
-    visibility:"public",
-    version:"1.0.0",
-    description:"If tabases",
-    endpointType:"nonsecured",
-    http_checked:"http",
-    https_checked:"https",
-    wsdl:"",
-    tags:"wikipedia,mediawiki",
-    tier:"Silver",
-    thumbUrl:"https://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png",
-    context:"/vvvvvkv",
-    tiersCollection:"Gold",
-    resourceCount:"0",
-    resourceMethod:"GET",
-    resourceMethodAuthType:"Application",
-    resourceMethodThrottlingTier:"Unlimited",
-    endpoint_config:{
-        production_endpoints:{
-            url:"http://en.wikipedia.org/w/api.php",
-            config:null
-        },
-        endpoint_type:"http"
-    },
-    uriTemplate:"/*"
+        action:"addAPI",
+        name:"Wsaccv",
+        username:"provider1",
+        visibility:"public",
+        version:"1.0.0",
+        description:"If tabases",
+        endpointType:"nonsecured",
+        http_checked:"http",
+        https_checked:"https",
+        wsdl:"",
+        tags:"wikipedia,mediawiki",
+        tier:"Silver",
+        thumbUrl:"https://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png",
+        context:"/vaccv",
+        tiersCollection:"Gold",
+        resourceCount:"0",
+        resourceMethod:"GET",
+        resourceMethodAuthType:"Application",
+        resourceMethodThrottlingTier:"Unlimited",
+        endpoint_config:{
+                production_endpoints:{
+                        url:"http://en.wikipedia.org/w/api.php",
+                        config:"null"
+                                        },
+                endpoint_type:"http"
+                        },
+        uriTemplate:"/*"
 }
-
 var userDetails={
         action:"addUser",
-        username:"GPrathap",
+        username:"GPrathap8",
         password:"geesara1234A",
         cookie:"",
         firstname:"user1",
@@ -115,25 +115,27 @@ var userDetails={
 }
 
 var applicatioDetails={
+
     action:"addApplication",
-    application:"default5",
+    application:"default39",
     tier:"Unlimited",
     callbackUrl:"",
     description:"",
-    username:"GPrathap"
+    username:"GPrathap8"
 }
 
 var subscriptionDetails={
     action:"addSubscription",
+    actionApp:"getApplications",
     name:"WikipediaAPIs",
     version:"1.0.0",
     provider:"provider1",
     tier:"Gold",
-    applicationId:55,
-    username:"GPrathap",
+    applicationId:58,
+    username:"GPrathap8",
     applicationKeyDetails:{
         action:"generateApplicationKey",
-        application:"default5",
+        application:"default39",
         keytype:"PRODUCTION",
         callbackUrl:"",
         authorizedDomains:"ALL",
@@ -141,12 +143,14 @@ var subscriptionDetails={
     }
 }
 var applicationKeyDetails={
+
   action:"generateApplicationKey",
-  application:"default4",
+  application:"default39",
   keytype:"PRODUCTION",
   callbackUrl:"",
   authorizedDomains:"ALL",
   validityTime:36000
+
 }
 
 var fs = require('fs');
@@ -172,7 +176,22 @@ var optsSingup = {
         }
 
 };
+var optsGetAppDetails = {
+    url: "https://localhost:3000/initusers/getAppDetails",
+    method: "POST",
+    ca: [fs.readFileSync('keys/servercert.pem')],
+    headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+    },
+    form:{
+            action:"getApplications",
+            username:userDetails.username,
+            applicationKeyDetails:{
+                application:"default39"
+            }
+    }
 
+};
 var optsLogin = {
     url: "https://localhost:3000/initusers/login",
     method: "POST",
@@ -320,9 +339,11 @@ var optstrycookie = {
 //optsAddApplication
 //optsSubscription
 //optsLoginAPI
+//optsaddAPI
 //optsPublishAPI
+//optsGetAppDetails
 
-request(optsSubscription, function (err, res, body) {
+request(optsGetAppDetails, function (err, res, body) {
     console.log('error', err);
     console.log('status', res.statusCode);
     console.log('body', body);
